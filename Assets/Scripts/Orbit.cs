@@ -11,10 +11,17 @@ public class Orbit : MonoBehaviour
     {
         currentIndex++;
     }
+    public void ReduceChildtIndex(){
+        currentIndex--;
+    }
+
 
     public int GetCurrentIndex()
     {
         return currentIndex;
     }
 
+    public Particle GetParticle(int i){
+        return transform.GetChild(i).gameObject.GetComponent<Particle>();
+    }
 }

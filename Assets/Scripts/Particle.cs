@@ -11,8 +11,21 @@ public class Particle : MonoBehaviour
     [SerializeField] OrbitController orbitController;
     [SerializeField] int colorValue = 0;
 
+    [Header("Effects")]
+    [SerializeField] GameObject destructionVFX;
+    [SerializeField] float durationOfDestruction = 0.5f;
+    [SerializeField] AudioClip destructionSFX;
+    
+    [SerializeField] [Range(0,1)]float destructionVolumn = 0.5f;
+    
     int currentOrbitIndex;
     int currentChildIndex;
+
+    int finalX;
+    int finalY;
+    bool secondFall = false;
+
+    
     bool findTarget = false;
     Vector3 targetPos;
     float gap = 1f;
@@ -28,7 +41,8 @@ public class Particle : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-       //Debug.Log("this color:" + colorValue);
+        orbitController = FindObjectOfType<OrbitController>();
+       //Debug.Log("this color:" + colorValue`);
     }
     // Update is called once per frame
     void Update()
@@ -53,45 +67,31 @@ public class Particle : MonoBehaviour
     {
         moveSpeed = speed;
     }
-
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.gameObject.GetComponent<OrbitSpawner>())
         {
-            Debug.Log("On trigger enter");
+            // Debug.Log("On trigger enter");
             targetPos = FindTarget().position;
             findTarget = true;
           }
         else if (other.gameObject.GetComponent<Particle>() || other.gameObject.GetComponent<BottomCollider>())
         {
-            if (!hasCollided) { 
+            if (!hasCollided) {
                 setMoveSpeed(0);
                 transform.position = GetNearestPoint();
-                SetOrbitParent();
+                if(!secondFall){
+                   SetOrbitParent();
+                }else{
+                    orbitController.CheckBrokenCondition(finalX,finalY);
+                }
                 GetComponent<CircleCollider2D>().isTrigger = true;
                 // TODO add the value to particle matrix
-                CheckBrokenCondition();
-
                 // avoid triggered twice
                 hasCollided = true;
             }
         }
     }
-
-    // check if any broken conditions are met
-    private void CheckBrokenCondition()
-    {
-        // List<GameObject> destroyList = new List<GameObject>();
-        // Orbit thisOrbit = orbitController.getOrbitByIndex(currentOrbitIndex);
-        // check if there is particile in the same orbit with the same color
-
-        //check is neighbor orbit has a particle in the same row with the same color
-         
-        return;
-    }
-
-
-    // align particle to nearest orbit based on the x position
     private void SetOrbitParent()
     {
         int newInt = (int)transform.position.x;
@@ -126,28 +126,17 @@ public class Particle : MonoBehaviour
         // set the parent of the particle
         gameObject.transform.SetParent(parentTransform,true);
         currentOrbitIndex = orbitIndex;
-        Debug.Log("Current Orbit: " + currentOrbitIndex);
+        // Debug.Log("Current Orbit: " + currentOrbitIndex);
         Orbit thisOrbit = parentTransform.gameObject.GetComponent<Orbit>();
         if (thisOrbit)
         {
+            // Debug.Log("current index: "+thisOrbit.GetCurrentIndex());
             currentChildIndex = thisOrbit.GetCurrentIndex();
             thisOrbit.addChildIndex();
-
-            Debug.Log("X: " + currentOrbitIndex + " Y: " + currentChildIndex + " value: " + colorValue);
             orbitController.AddParticle(currentOrbitIndex, currentChildIndex, colorValue);
-            orbitController.PrintMatrixContent();
-            //Debug.Log("current index: "+thisOrbit.GetCurrentIndex());
         }
     }
-
-    //find the nearest orbit fix point
-    private Vector3 GetNearestPoint()
-    {
-        var newX = Mathf.Round(transform.position.x * 2) / 2;
-        var newY = Mathf.Round(transform.position.y * 2) / 2;
-        return new Vector3(newX, newY, 0);
-    }
-    
+  
     // find the transform of nearest orbit spawner;
     private Transform FindTarget()
     {
@@ -168,13 +157,38 @@ public class Particle : MonoBehaviour
         return closestOrbitPoint;
     }
 
-    //get the color of the particle
+      //find the nearest fix point
+    private Vector3 GetNearestPoint()
+    {
+        var newX = Mathf.Round(transform.position.x * 2) / 2;
+        var newY = Mathf.Round(transform.position.y * 2) / 2;
+        return new Vector3(newX, newY, 0);
+    }
+    
+    public void ResetParticle(int x, int y){
+        finalX = x;
+        finalY = y;
+        secondFall = true;
+        hasCollided = false;
+        setMoveSpeed(2f);
+    }
+
+    //destroy and play effect;
+    public void Explode(){
+        Destroy(gameObject);
+        GameObject destruction = Instantiate(destructionVFX,transform.position,transform.rotation);
+        Destroy(destruction, durationOfDestruction);
+        AudioSource.PlayClipAtPoint(destructionSFX,Camera.main.transform.position, destructionVolumn);
+    }
+
+
+    //TO DELETE get the color of the particle
     public Color getColor()
     {
         return GetComponent<SpriteRenderer>().color;
     }
 
-    //test
+    //TO DELETE
     private void OnTriggerExit2D(Collider2D other)
     {
         if (other.gameObject.GetComponent<OrbitSpawner>())

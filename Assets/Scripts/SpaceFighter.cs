@@ -9,7 +9,7 @@ public class SpaceFighter : MonoBehaviour
     float maxX = 2f;
     float minY = -0.5f;
     float maxY = 1.5f;
-    float padding = 0.1f;
+    float padding = 0.2f;
     Vector3 worldMousePos;
     // Start is called before the first frame update
     void Start()
