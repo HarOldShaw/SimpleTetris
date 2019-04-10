@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Particle : MonoBehaviour
-{
+{   
+    OrbitController orbitController;
     [SerializeField] float moveSpeed = 2f;
 
     [Header("Components need to be assigned")]
-    [SerializeField] OrbitController orbitController;
     [SerializeField] int colorValue = 0;
 
     [Header("Effects")]

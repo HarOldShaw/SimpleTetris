@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class OrbitController : MonoBehaviour
 {
+    [SerializeField] GameSession gameSession;
     int[,] particleMatrix = new int[5,5];
     int[,] destroyMatrix = new int[5,5];
     int rowLength;
@@ -16,7 +17,9 @@ public class OrbitController : MonoBehaviour
         rowLength = particleMatrix.GetLength(0);
         colLength = particleMatrix.GetLength(1);
         PrintMatrixContent();
+        gameSession = FindObjectOfType<GameSession>();
     }
+
 
     public void AddParticle(int x, int y, int value)
     {
@@ -29,6 +32,10 @@ public class OrbitController : MonoBehaviour
     public void CheckBrokenCondition(int x, int y)
     {        
         PrintMatrixContent();
+        bool isDestroy = false;
+        int horizontalDestroyGroup = 0;
+        int verticalDestroyGroup = 0;
+        int verticalDestroyType = -1;
         //compare down
         if(y>=2){
             if(CheckDown(x,y)){
@@ -36,42 +43,62 @@ public class OrbitController : MonoBehaviour
                     MarkAsDestory(x,y);
                     MarkAsDestory(x,y-1);
                     MarkAsDestory(x,y-2);
+                    isDestroy = true;
+                    verticalDestroyGroup++;
+                    verticalDestroyType = particleMatrix[x,y];
+                    //Debug.Log("verticle destroy type: "+ particleMatrix[x,y]+" (x,y):"+x+","+y);
                 }
             }
         }
         //look left
         if(x>=2){
-            if(CheckLeft(x,y)){
-                if(CheckLeft(x-1,y)){
+            if((particleMatrix[x,y] !=0 && particleMatrix[x-1,y]!=0 && particleMatrix[x-2,y]!=0) &&(particleMatrix[x,y] !=9 && particleMatrix[x-1,y]!=9 && particleMatrix[x-2,y]!=9)){
+                if(particleMatrix[x,y] != particleMatrix[x-1,y] && particleMatrix[x-1,y] != particleMatrix[x-2,y] && particleMatrix[x,y]!= particleMatrix[x-2,y]){
                     MarkAsDestory(x,y);
                     MarkAsDestory(x-1,y);
                     MarkAsDestory(x-2,y);
+                    isDestroy = true;
+                    horizontalDestroyGroup++;
                 }
             }
         }
 
-        //look right
+        //look right 
         if(x<=2){
-            if(CheckRight(x,y)){
-                if(CheckRight(x+1,y)){
+            if((particleMatrix[x,y] !=0 && particleMatrix[x+1,y]!=0 && particleMatrix[x+2,y]!=0) &&(particleMatrix[x,y] !=9 && particleMatrix[x+1,y]!=9 && particleMatrix[x+2,y]!=9)){
+                if(particleMatrix[x,y]!= particleMatrix[x+1,y] && particleMatrix[x+1,y] != particleMatrix[x+2,y] && particleMatrix[x,y]!= particleMatrix[x+2,y]){
                     MarkAsDestory(x,y);
                     MarkAsDestory(x+1,y);
                     MarkAsDestory(x+2,y);
+                    isDestroy = true;
+                    horizontalDestroyGroup++;
                 }
             }
         }
 
         //look both side
         if((x>=1 && x<=3)){
-            if(CheckLeft(x,y) && CheckRight(x,y)){
-                MarkAsDestory(x,y);
-                MarkAsDestory(x-1,y);
-                MarkAsDestory(x+1,y);
+            if((particleMatrix[x,y] !=0 && particleMatrix[x-1,y]!=0 && particleMatrix[x+1,y]!=0) &&(particleMatrix[x,y] !=9 && particleMatrix[x-1,y]!=9 && particleMatrix[x+1,y]!=9)){
+                if(particleMatrix[x,y]!= particleMatrix[x-1,y] && particleMatrix[x,y] != particleMatrix[x+1,y] && particleMatrix[x-1,y]!= particleMatrix[x+1,y]){
+                    MarkAsDestory(x,y);
+                    MarkAsDestory(x-1,y);
+                    MarkAsDestory(x+1,y);
+                    isDestroy = true;
+                    horizontalDestroyGroup++;
+                }
             }
         }
 
         //Handle Particle Destroy
-        HandleParticleDestroy(x,y);
+        if(isDestroy){
+            HandleParticleDestroy(x,y);
+            if(verticalDestroyGroup!=0){
+                gameSession.VerticalDestroy(verticalDestroyType);
+            }
+            if(horizontalDestroyGroup!=0){
+                gameSession.HorizontalDestroy(horizontalDestroyGroup);
+            }
+        }
     }
 
     private void HandleParticleDestroy(int x, int y){
@@ -87,15 +114,13 @@ public class OrbitController : MonoBehaviour
         ResetDestroyMatrix();
     }   
 
+
     private void DestroyParticle(int x, int y){
         Orbit thisOrbit = GetOrbitByIndex(x);
         Particle target = thisOrbit.GetParticle(y);
     
         // Debug.Log("Current Orbit: "+x+ "index: "+GetOrbitByIndex(x).GetCurrentIndex()+ "child count:" + thisOrbit.transform.childCount);
         StartCoroutine(ToDestroy(target,x,y));
-        //let the particle fall down,
-     
-        
     }
 
     IEnumerator ToDestroy(Particle obj, int x, int y){
@@ -108,6 +133,7 @@ public class OrbitController : MonoBehaviour
         }
         PrintMatrixContent();
         yield return new WaitForSeconds(0.1f);
+        // Particle falls down and fill the gap
         Orbit newOrbit = GetOrbitByIndex(x);
         // Debug.Log("After destroy Orbit "+x+ "index: "+newOrbit.GetCurrentIndex()+ "child count:" + newOrbit.transform.childCount);     
         if(particleMatrix[x,y] != 0){
@@ -147,26 +173,6 @@ public class OrbitController : MonoBehaviour
             return false;
         }
     }
-
-    public bool CheckLeft(int x, int y){
-        if (particleMatrix[x,y] == particleMatrix[x-1,y]){
-            // Debug.Log("checkleft: true");
-            return true;
-        }else
-        {
-            return false;
-        }
-    }
-
-    public bool CheckRight(int x, int y){
-        if (particleMatrix[x,y] == particleMatrix[x+1,y]){
-            // Debug.Log("checkright: true");
-            return true;
-        }else
-        {
-            return false;
-        }
-    }
  
     //TEST 
     public void PrintMatrixContent()
@@ -180,7 +186,7 @@ public class OrbitController : MonoBehaviour
             }
             arrayString += (System.Environment.NewLine + System.Environment.NewLine);
         }
-        Debug.Log("arrayString: "+arrayString);
+        // Debug.Log("arrayString: "+arrayString);
     }
 
 
