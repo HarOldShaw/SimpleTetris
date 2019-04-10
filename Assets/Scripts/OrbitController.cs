@@ -38,15 +38,17 @@ public class OrbitController : MonoBehaviour
         int verticalDestroyType = -1;
         //compare down
         if(y>=2){
-            if(CheckDown(x,y)){
-                if(CheckDown(x,y-1)){
-                    MarkAsDestory(x,y);
-                    MarkAsDestory(x,y-1);
-                    MarkAsDestory(x,y-2);
-                    isDestroy = true;
-                    verticalDestroyGroup++;
-                    verticalDestroyType = particleMatrix[x,y];
-                    //Debug.Log("verticle destroy type: "+ particleMatrix[x,y]+" (x,y):"+x+","+y);
+            if(particleMatrix[x,y]!=9){
+                if(CheckDown(x,y)){
+                    if(CheckDown(x,y-1)){
+                        MarkAsDestory(x,y);
+                        MarkAsDestory(x,y-1);
+                        MarkAsDestory(x,y-2);
+                        isDestroy = true;
+                        verticalDestroyGroup++;
+                        verticalDestroyType = particleMatrix[x,y];
+                        //Debug.Log("verticle destroy type: "+ particleMatrix[x,y]+" (x,y):"+x+","+y);
+                    }
                 }
             }
         }

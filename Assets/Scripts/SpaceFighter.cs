@@ -10,25 +10,22 @@ public class SpaceFighter : MonoBehaviour
     float minY = -0.5f;
     float maxY = 1.5f;
     float padding = 0.2f;
+    float moveSpeed = 3f;
     Vector3 worldMousePos;
     // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
     void Update()
     {
-        worldMousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 playerPos = GetPos(worldMousePos);
+        Move();
+    }
+
+    private void Move(){
+        float deltaX = Input.GetAxis("Horizontal") * Time.deltaTime*moveSpeed;
+        float deltaY = Input.GetAxis("Vertical") * Time.deltaTime*moveSpeed;           
+        float newX = Mathf.Clamp(transform.position.x + deltaX, minX + padding, maxX - padding);
+        float newY = Mathf.Clamp(transform.position.y + deltaY, minY + padding, maxY - padding);
+        Vector2 playerPos = new Vector2(newX,newY);
+        // Debug.Log("playerPos:"+ playerPos);
         transform.position = playerPos;
     }
 
-    private Vector2 GetPos(Vector2 worldPos)
-    {
-        float newX = Mathf.Clamp(worldPos.x, minX + padding, maxX - padding);
-        float newY = Mathf.Clamp(worldPos.y, minY + padding, maxY - padding);
-        Vector2 finalPos = new Vector2(newX, newY);
-        return finalPos;
-    }
 }

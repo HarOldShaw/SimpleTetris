@@ -9,7 +9,7 @@ public class Particle : MonoBehaviour
     [SerializeField] float moveSpeed = 2f;
 
     [Header("Components need to be assigned")]
-    [SerializeField] int colorValue = 0;
+    [SerializeField] int colorValue;
 
     [Header("Effects")]
     [SerializeField] GameObject destructionVFX;
@@ -77,17 +77,21 @@ public class Particle : MonoBehaviour
           }
         else if (other.gameObject.GetComponent<Particle>() || other.gameObject.GetComponent<BottomCollider>())
         {
+           
             if (!hasCollided) {
                 setMoveSpeed(0);
                 transform.position = GetNearestPoint();
                 if(!secondFall){
-                   SetOrbitParent();
+                    SetOrbitParent();
+                    if(colorValue == 9){
+                        FindObjectOfType<GameSession>().AddDebrisInStore();
+                    }
                 }else{
                     orbitController.CheckBrokenCondition(finalX,finalY);
                 }
                 GetComponent<CircleCollider2D>().isTrigger = true;
-                // TODO add the value to particle matrix
-                // avoid triggered twice
+                //if it is a debri, add the debriInStore 
+                // avoid triggered twice 
                 hasCollided = true;
             }
         }
@@ -132,8 +136,14 @@ public class Particle : MonoBehaviour
         {
             // Debug.Log("current index: "+thisOrbit.GetCurrentIndex());
             currentChildIndex = thisOrbit.GetCurrentIndex();
-            thisOrbit.addChildIndex();
-            orbitController.AddParticle(currentOrbitIndex, currentChildIndex, colorValue);
+            //check if the storage is full
+            if(currentChildIndex>=5){
+                //full, lose
+                FindObjectOfType<GameSession>().HandleSecondLoseCondition();
+            }else{
+                thisOrbit.addChildIndex();
+                orbitController.AddParticle(currentOrbitIndex, currentChildIndex, colorValue);
+            }
         }
     }
   
@@ -181,19 +191,4 @@ public class Particle : MonoBehaviour
         AudioSource.PlayClipAtPoint(destructionSFX,Camera.main.transform.position, destructionVolumn);
     }
 
-
-    //TO DELETE get the color of the particle
-    public Color getColor()
-    {
-        return GetComponent<SpriteRenderer>().color;
-    }
-
-    //TO DELETE
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.gameObject.GetComponent<OrbitSpawner>())
-        {   
-            //GetComponent<Rigidbody2D>().collisionDetectionMode = CollisionDetectionMode2D.Discrete
-        }       
-    }
 }
